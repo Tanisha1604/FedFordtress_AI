@@ -1,0 +1,174 @@
+================================================================================
+SERVER MODULE - DETAILED NOTES & DOCUMENTATION
+================================================================================
+This file contains all detailed comments, mathematical foundations, and design
+rationale extracted from server.py for reference.
+
+================================================================================
+1. OVERVIEW
+================================================================================
+Core server that orchestrates asynchronous federated learning with:
+  - Async update buffer (no synchronous round barriers)
+  - Multi-layered anomaly detection (malicious / noisy client filtering)
+  - Robust aggregation (AWTM - Adaptive Weighted Trimmed Mean)
+  - Differential privacy (Gaussian mechanism on aggregated updates)
+  - Reputation management (persistent, cross-round client scoring)
+  - Convergence tracking and performance evaluation
+
+CHALLENGE REQUIREMENTS MAP:
+  1. Asynchronous client updates       -> AsyncUpdateBuffer
+  2. Robust aggregation                -> AWTMAggregator
+  3. Detect / mitigate malicious       -> AnomalyDetector
+  4. Privacy preservation              -> DifferentialPrivacy
+  5. Performance evaluation            -> ConvergenceTracker
+  6. Working prototype                 -> run_simulation()
+
+================================================================================
+2. DIFFERENTIAL PRIVACY - GAUSSIAN MECHANISM
+================================================================================
+PRIVACY GUARANTEE:
+  After adding Gaussian noise with calibrated standard deviation sigma,
+  the output satisfies (epsilon, delta)-DP. This means an adversary
+  observing the aggregated model update cannot determine (with confidence
+  > delta) whether any single client participated.
+
+FORMULA:
+  sigma = sensitivity * sqrt(2 * ln(1.25 / delta)) / epsilon
+
+WHY Gaussian instead of Laplace?
+  The Gaussian mechanism provides tighter bounds for high-dimensional
+  data (model parameters), which is typical in FL.
+
+CLIPPING:
+  Before aggregation we clip each update to L2 norm <= sensitivity.
+  This ensures the sensitivity bound holds regardless of what clients
+  send.
+
+  clip(update) = update * min(1, sensitivity / ||update||_2)
+
+PRIVACY AMPLIFICATION:
+  When aggregating n clients, the effective noise scale is divided by n:
+    sigma_effective = sigma / n
+  This is because the aggregation itself provides privacy amplification
+  -- individual contributions are diluted.
+
+PARAMETERS:
+  epsilon (default 1.0): Privacy budget (lower = more private)
+  delta (default 1e-5): Probability of privacy leak
+  sensitivity (default 1.0): Max L2 norm of any single update (clip threshold)
+
+================================================================================
+3. ASYNCHRONOUS UPDATE BUFFER
+================================================================================
+MOTIVATION:
+  In real-world FL, clients have different hardware, network latency, and
+  availability. Requiring all clients to submit simultaneously wastes time
+  waiting for stragglers. The buffer enables:
+    - Fast clients to contribute quickly
+    - Slow clients to join later rounds
+    - The server to aggregate whenever enough updates arrive
+
+TRIGGER CONDITIONS (whichever comes first):
+  1. Buffer reaches `min_updates` size
+  2. `timeout` seconds have elapsed since the buffer opened
+
+METHODS:
+  submit(update): Add an update to the buffer
+  is_ready(): Check if trigger condition met
+  flush(): Return all buffered updates and clear
+  size(): Current buffer length
+
+================================================================================
+4. CONVERGENCE TRACKER
+================================================================================
+Tracks training metrics across rounds for performance evaluation.
+
+Metrics tracked:
+  - Global model parameter norm (should stabilise)
+  - Average update norm per round (should decrease)
+  - Number of filtered clients per round
+  - Aggregation confidence per round
+  - Privacy budget spent (cumulative epsilon)
+
+Outputs a formatted summary table at the end of training.
+
+================================================================================
+5. ASYNC FL SERVER (MAIN ORCHESTRATOR)
+================================================================================
+LIFECYCLE:
+  1. Initialise with a global model (dict of parameter arrays)
+  2. Clients download the current global model + version number
+  3. Clients train locally and submit updates asynchronously
+  4. Server buffers updates -- triggers aggregation when ready
+  5. Aggregation pipeline:
+       a. DP clipping (bound individual update norm)
+       b. Anomaly detection -- filter malicious clients
+       c. Inject reputation scores into trusted updates
+       d. Robust aggregation (AWTM)
+       e. DP noise addition (Gaussian mechanism)
+       f. Apply aggregated delta to global model
+       g. Record convergence metrics
+       h. Bump model version
+  6. Repeat from step 2
+
+COMPONENTS:
+  - AsyncUpdateBuffer: Collects updates, triggers when full/timeout
+  - AnomalyDetector: GradientNormDetector + ReputationSystem
+  - AWTMAggregator: Adaptive Weighted Trimmed Mean with DBSCAN
+  - DifferentialPrivacy: Gaussian mechanism with clipping
+  - ConvergenceTracker: Records per-round metrics
+
+PUBLIC API:
+  get_global_model() -> (model_dict, version)
+  submit_update(ClientUpdate) -> None (clips + buffers)
+  try_aggregate() -> Optional[RoundMetrics] (if buffer ready)
+  force_aggregate() -> Optional[RoundMetrics] (flush now)
+
+PRIVATE:
+  _run_aggregation_round() -> RoundMetrics (full pipeline)
+  _model_norm() -> float (L2 norm of all global params)
+
+================================================================================
+6. SERVER CONFIG
+================================================================================
+Central configuration dataclass with all server parameters:
+
+  async_buffer_size (default 5): Min updates before aggregation
+  async_timeout (default 10.0): Max seconds to wait
+  dp_epsilon (default 1.0): Privacy budget
+  dp_delta (default 1e-5): Privacy leak probability
+  dp_sensitivity (default 1.0): Clipping threshold
+  dp_enabled (default True): Whether to apply DP
+  norm_weight (default 0.6): Weight for gradient norm detection
+  reputation_weight (default 0.4): Weight for reputation system
+  flag_threshold (default 0.5): Score threshold for flagging
+
+================================================================================
+7. SIMULATION
+================================================================================
+run_simulation() creates a reproducible (seed=42) end-to-end test.
+
+Setup:
+  - Global model: 4 layers (20x10, 20, 10x20, 10)
+  - 8 honest clients + 3 malicious clients
+  - 10 rounds
+
+Honest clients: Send small gradient-like updates toward a target,
+  with decreasing norm (simulating convergence).
+
+Malicious clients: Rotate through 3 attack types:
+  - Round 0, 3, 6, 9: Scaling attack (magnitude 50x normal)
+  - Round 1, 4, 7: Sign-flip attack (reversed direction, 5x)
+  - Round 2, 5, 8: Random noise attack (magnitude 10x)
+
+Also have staleness=2 (submitting on old model version).
+
+Expected results:
+  - Malicious clients flagged and filtered from round 3 onward
+  - Reputations: honest ~0.67, malicious ~0.00
+  - Model norm stabilizes
+  - Average filter rate ~22%
+
+================================================================================
+END OF NOTES
+================================================================================

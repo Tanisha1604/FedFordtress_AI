@@ -1,0 +1,258 @@
+================================================================================
+AGGREGATION MODULE - DETAILED NOTES & DOCUMENTATION
+================================================================================
+This file contains all detailed comments, mathematical foundations, and design
+rationale extracted from aggregation.py for reference.
+
+================================================================================
+1. OVERVIEW
+================================================================================
+This module implements robust aggregation algorithms for federated learning
+that filter out malicious/corrupted client updates while preserving honest ones.
+
+ALGORITHMS IMPLEMENTED (kept: TrimmedMean, AWTM):
+  1. FedAvg (Baseline) - Simple weighted averaging, NOT robust
+  2. Trimmed Mean - Remove extreme values before averaging
+  3. Median Aggregation - Coordinate-wise median
+  4. Krum Algorithm - Select most similar update to neighbors
+  5. AWTM (Adaptive Weighted Trimmed Mean) - OUR INNOVATION
+
+References: Yin et al. (2018), Blanchard et al. (2017)
+
+================================================================================
+2. MATHEMATICAL FOUNDATION
+================================================================================
+Byzantine Robustness:
+  An algorithm is f-resilient if it can tolerate f malicious clients out of
+  n total clients.
+
+Breakdown Point (max fraction of malicious clients tolerable):
+  - FedAvg:       0%   (any malicious client corrupts the model)
+  - Trimmed Mean: beta% (beta = trim ratio)
+  - Median:       50%  (highest possible)
+  - Krum:         <50% (depends on distance metric)
+  - AWTM:         Adaptive (uses clustering to estimate)
+
+================================================================================
+3. BASE UTILITIES
+================================================================================
+flatten_update(update):
+  Converts dict of layer tensors to a single flat vector.
+  WHY: Many aggregation algorithms (Krum, distance computations) operate
+  on vectors, not dictionaries. Extracts all parameters into a single
+  contiguous vector. Keys are sorted for consistent ordering.
+
+unflatten_update(flat_update, reference_update):
+  Converts flat vector back to dictionary format matching reference structure.
+  WHY: After vector operations, we need to restore the original layer
+  structure to apply the update to the model.
+
+compute_pairwise_distances(updates):
+  Computes pairwise Euclidean distances between all updates.
+  Formula: d(u_i, u_j) = ||u_i - u_j||_2 = sqrt(sum((u_i - u_j)^2))
+  WHY: Distance metrics are fundamental to Krum, clustering-based methods.
+
+================================================================================
+4. FEDAVG (BASELINE - NOT ROBUST)
+================================================================================
+Algorithm:
+  Computes a weighted average of all client updates, where weights are
+  proportional to the number of local training samples.
+
+Formula:
+  w_global^(t+1) = SUM( (n_k / n_total) * w_k^(t) )
+  where n_k = samples at client k, n_total = total samples, w_k = params
+
+WHY IT'S NOT ROBUST:
+  If even ONE malicious client sends an extremely large update, it will
+  completely corrupt the global model.
+
+Example:
+  9 honest clients: updates ~ [0.1, 0.1, 0.1, ...]
+  1 malicious client: update = [1000, 1000, 1000, ...]
+  Result: averaged ~ [100, 100, 100, ...] -> Model corrupted!
+
+================================================================================
+5. TRIMMED MEAN (ROBUST)
+================================================================================
+Algorithm:
+  For each parameter dimension:
+    1. Sort all values from different clients
+    2. Remove beta% largest and beta% smallest values (trim extremes)
+    3. Average the remaining values
+
+Formula:
+  TrimmedMean(x_1, ..., x_n) = (1 / (n - 2k)) * SUM( x_(i) )
+  where k = floor(beta * n), and x_(i) are sorted values
+
+WHY IT'S ROBUST:
+  If malicious clients send extremely large or small values, they will
+  be in the extreme positions after sorting and will be trimmed away.
+
+Example (beta = 20%, 5 clients, 1 malicious):
+  Values: [1.0, 1.1, 1.2, 1.3, 1000.0]  <- Last one is malicious
+  Sorted: [1.0, 1.1, 1.2, 1.3, 1000.0]
+  Trim 20% (1 from each end): [1.1, 1.2, 1.3]
+  Result: Mean([1.1, 1.2, 1.3]) = 1.2
+
+Breakdown Point: Can tolerate up to beta% malicious clients.
+
+Trade-off:
+  Higher beta = more robust but may discard good updates
+  Lower beta = more accurate but less robust
+  Typical values: 0.1 (light), 0.2 (moderate), 0.3 (aggressive)
+
+Limitation:
+  Fixed beta doesn't adapt to varying attack levels. If only 5% are
+  malicious but beta=30%, we waste 25% of good updates.
+
+================================================================================
+6. MEDIAN AGGREGATION (HIGHLY ROBUST)
+================================================================================
+Algorithm:
+  For each parameter dimension, take the median value across all clients.
+
+Formula:
+  MedianAgg(x_1, ..., x_n) = median(x_1, ..., x_n)
+  = x_((n+1)/2) if n odd
+  = (x_(n/2) + x_(n/2+1)) / 2 if n even
+
+WHY IT'S HIGHLY ROBUST:
+  The median is completely unaffected by the magnitude of extreme values.
+  As long as fewer than 50% of clients are malicious, the median will
+  come from an honest client.
+
+Breakdown Point: 50% (theoretical maximum for any method).
+
+Trade-off:
+  - May not capture the true distribution of honest updates
+  - Less efficient than mean when all updates are honest
+  - For small number of clients, can be noisy
+
+When to Use:
+  - High percentage of malicious clients expected
+  - Safety is more important than accuracy
+  - As a fallback when other methods detect many anomalies
+
+================================================================================
+7. KRUM ALGORITHM (ROBUST AGAINST COORDINATED ATTACKS)
+================================================================================
+Algorithm:
+  For each client update, compute a "score" based on distances to nearby
+  updates. The update with the lowest score (most similar to neighbors)
+  is selected.
+
+Formula:
+  score(i) = SUM( ||u_i - u_j||^2 ) for j in N-closest(i)
+  where N-closest(i) are the n - f - 2 closest neighbors
+  f = expected number of malicious clients
+
+WHY IT'S ROBUST AGAINST COORDINATED ATTACKS:
+  In a coordinated attack, multiple malicious clients send similar bad
+  updates. However, these will still be far from honest updates. Honest
+  updates will be close to each other, giving them lower scores.
+
+Example (10 clients, 3 malicious sending similar bad updates):
+  - Honest updates: Close to each other -> Low scores
+  - Malicious updates: Far from honest ones -> High scores
+  Result: Selects an honest update
+
+Breakdown Point: Up to (n-2)/2 malicious clients.
+
+Multi-Krum Variant:
+  Instead of selecting just one update, select top-k with lowest scores
+  and average them. Better accuracy while maintaining robustness.
+
+Limitations:
+  - Only selects ONE update (or k in Multi-Krum), wasting other honest updates
+  - Requires knowing/estimating f (number of malicious clients)
+  - High computational complexity O(n^2 * d) where d is dimension
+
+================================================================================
+8. AWTM - ADAPTIVE WEIGHTED TRIMMED MEAN (OUR INNOVATION)
+================================================================================
+This is our novel contribution combining strengths of multiple approaches.
+
+INNOVATION POINTS:
+  1. ADAPTIVE TRIM RATIO:
+     Instead of fixed trim ratio, estimates the fraction of malicious
+     clients per round using DBSCAN clustering.
+
+  2. REPUTATION INTEGRATION:
+     Historical behavior tracked via reputation scores. Consistently
+     good clients get higher weight.
+
+  3. STALENESS-AWARE WEIGHTING:
+     In async FL, older updates (computed on stale models) get lower
+     weight to prevent pulling model backward.
+
+ALGORITHM:
+  1. Estimate malicious ratio using DBSCAN clustering
+     - Cluster updates based on pairwise distances
+     - Small outlier clusters likely contain malicious updates
+     - Outlier ratio = size of outlier clusters / total
+
+  2. Compute adaptive trim ratio
+     - beta_adaptive = min(estimated_ratio + safety_margin, max_trim)
+     - Safety margin adds buffer for estimation errors
+
+  3. Compute client weights
+     - weight = reputation / (1 + alpha * staleness)
+     - alpha is staleness decay coefficient
+
+  4. Perform weighted trimmed mean
+     - Trim beta_adaptive fraction from each end
+     - Weight-average remaining updates
+
+WHY BETTER THAN STANDARD TRIMMED MEAN:
+  Fixed trim ratio is suboptimal:
+    If attack level > trim ratio -> Attack succeeds
+    If attack level < trim ratio -> Wasting good updates
+  AWTM adapts:
+    Low attack -> Low trim -> More accurate
+    High attack -> High trim -> More robust
+
+MATHEMATICAL FORMULATION:
+  Let:
+    rho = estimated malicious ratio (from clustering)
+    beta = trim ratio
+    alpha = staleness coefficient
+    r_i = reputation of client i
+    s_i = staleness of client i
+  Then:
+    beta_adaptive = min(rho + margin, beta_max)
+    w_i = r_i / (1 + alpha * s_i)
+    result = SUM( w_i * u_i ) / SUM( w_i )  (after trimming)
+
+DBSCAN CLUSTERING DETAILS:
+  Intuition:
+    - Honest updates cluster together (similar direction)
+    - Malicious updates are outliers or form small clusters
+  DBSCAN is ideal because:
+    - Doesn't require specifying number of clusters
+    - Naturally identifies outliers (noise points)
+    - Handles arbitrary cluster shapes
+  Auto-eps: median of nearest-neighbor distances * 1.5
+  IMPORTANT: Exclude noise label (-1) when finding the largest cluster
+
+================================================================================
+9. BUG FIXES APPLIED
+================================================================================
+1. AWTM Trim Logic (line ~880):
+   BUG: Was trimming from both ends of sorted-by-distance array,
+        removing both closest and farthest updates.
+   FIX: Now only trims the farthest (most extreme) updates.
+
+2. DBSCAN Cluster Detection (line ~760):
+   BUG: Was not excluding noise label (-1) from cluster size counts.
+        When most points were noise, it treated noise as largest cluster.
+   FIX: Now excludes noise when finding largest cluster. Falls back to
+        treating all as honest if all points are noise.
+
+3. Krum Truth-Value Ambiguity (line ~597):
+   BUG: `if filtered_indices` caused ValueError with numpy arrays.
+   FIX: Changed to `if len(filtered_indices) > 0`.
+
+================================================================================
+END OF NOTES
+================================================================================
