@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -662,7 +662,9 @@
             border: 1px solid rgba(16, 185, 129, 0.2);
         }
 
-        .issue-body {}
+        .issue-body {
+            display: block;
+        }
 
         .issue-title {
             font-size: 0.95rem;
@@ -1194,41 +1196,101 @@
             msgs.appendChild(div);
         }
 
-        /* ═══ FOLLOW-UP CHAT ═══ */
-        const CHAT_KB = [
-            { kw: ['learning rate', 'lr'], ans: 'A <strong>learning rate that is too high</strong> causes your model updates to overshoot, resulting in very large weight norms. Federated aggregation servers flag these as anomalous. Try setting <code>lr = 0.001</code> or using a scheduler like <code>CosineAnnealingLR</code>.' },
-            { kw: ['batch size', 'batch'], ans: 'A <strong>very small batch size</strong> (< 16) introduces high gradient variance, making your updates look like noise injection to anomaly detectors. Try <code>batch_size = 32</code> or higher.' },
-            { kw: ['imbalance', 'class imbalance', 'unbalanced'], ans: 'Class imbalance means your model biases toward majority classes. This causes <strong>skewed gradient directions</strong> that look suspicious to the server. Use <code>WeightedRandomSampler</code> or augment minority classes.' },
-            { kw: ['normalize', 'normalization'], ans: 'Without proper normalization (e.g., mean=0.5, std=0.5 for images), raw pixel values cause <strong>exploding gradients</strong>. Add <code>transforms.Normalize(mean, std)</code> to your dataset pipeline.' },
-            { kw: ['overfit', 'overfitting'], ans: 'Overfitting on small local data produces <strong>large gradient updates on specific features</strong>, triggering anomaly detectors. Reduce local epochs or add dropout (<code>nn.Dropout(0.3)</code>).' },
-            { kw: ['epoch', 'local epoch'], ans: 'Too many local epochs causes <strong>client drift</strong> — your model diverges far from the global model. This looks like a poisoning attack. Limit local epochs to 1–3 and use FedProx regularization.' },
-            { kw: ['few sample', 'small dataset', 'not enough data'], ans: 'With very few samples, your model memorizes rather than generalizes. This causes <strong>anomalously specific weight updates</strong>. Try to gather at least 200–500 training samples per client.' },
-            { kw: ['loss', 'nan', 'inf'], ans: 'NaN or Inf loss values are a sign of <strong>exploding gradients</strong>. Add gradient clipping: <code>torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)</code>' },
-            { kw: ['weight scaling', 'scale'], ans: 'Weight scaling attacks amplify model updates. If your code multiplies gradients or weights by a large factor unintentionally (e.g., in a custom loss), this will be flagged. Review your loss function for any scaling terms.' },
-            { kw: ['recommend', 'fix', 'how'], ans: 'Key recommendations: <br>1. Use <code>lr = 0.001</code> with a scheduler<br>2. Limit local epochs to 1–2<br>3. Normalize your dataset properly<br>4. Use batch size ≥ 32<br>5. Clip gradients to max norm 1.0' },
-        ];
+        /* ═══ FOLLOW-UP CHAT — powered by n8n ═══ */
+        const N8N_WEBHOOK = 'https://tkb123.app.n8n.cloud/webhook-test/372e049d-2c38-4d6c-b5db-7b5485349224';
 
-        function sendChat() {
+        function addTyping() {
+            const msgs = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = 'msg bot'; div.id = 'typing-indicator';
+            div.innerHTML = `<div class="msg-avatar">🤖</div>
+                <div class="msg-bubble" style="display:flex;gap:6px;align-items:center;padding:14px 20px">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--t-400);
+                        animation:dot 1.2s 0s infinite;display:inline-block"></span>
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--t-400);
+                        animation:dot 1.2s 0.2s infinite;display:inline-block"></span>
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--t-400);
+                        animation:dot 1.2s 0.4s infinite;display:inline-block"></span>
+                </div>`;
+            msgs.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function removeTyping() {
+            const t = document.getElementById('typing-indicator');
+            if (t) t.remove();
+        }
+
+        async function sendChat() {
             const input = document.getElementById('chat-input');
             const text = input.value.trim();
             if (!text) return;
             input.value = '';
+            input.disabled = true;
+
             addUserMsg(text);
+            addTyping();
 
-            const lower = text.toLowerCase();
-            const match = CHAT_KB.find(kb => kb.kw.some(k => lower.includes(k)));
+            // Build context from analysis result if available
+            let context = '';
+            if (analysisResult) {
+                const issues = (analysisResult.issues || []).map(i => i.title).join(', ');
+                context = `\n[Client analysis context — Health Score: ${analysisResult.health_score}/100, Issues found: ${issues || 'none'}]`;
+            }
 
-            setTimeout(() => {
-                if (match) {
-                    addBotMsg(match.ans);
-                } else if (analysisResult) {
-                    addBotMsg(`Based on your analysis, the most impactful fix would be: <strong>${(analysisResult.recommendations || [{ title: 'review your learning rate and normalization settings' }])[0].title}</strong>. Could you clarify your question? I can help with learning rate, batch size, class imbalance, data normalization, or overfitting.`);
-                } else {
-                    addBotMsg(`I can help you understand issues like <strong>learning rate</strong>, <strong>class imbalance</strong>, <strong>normalization</strong>, <strong>local epochs</strong>, or <strong>gradient exploding</strong>. What would you like to know?`);
-                }
-            }, 450);
+            try {
+                const res = await fetch(N8N_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chatInput: text + context,
+                        message: text + context,
+                        sessionId: document.getElementById('session-id').textContent,
+                    })
+                });
+
+                removeTyping();
+
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                // Handle various n8n response formats
+                const reply = data.output || data.text || data.message ||
+                    data.response || data.reply || data.answer ||
+                    (Array.isArray(data) && (data[0]?.output || data[0]?.text)) ||
+                    'I received your message! Please check your n8n workflow is configured to return a response.';
+
+                addBotMsg(reply);
+
+            } catch (err) {
+                removeTyping();
+                addBotMsg(`⚠️ Could not reach the AI assistant right now. <br><small style="color:var(--t-600)">${err.message}</small><br><br>
+                    <strong>Quick tips based on your analysis:</strong><br>
+                    • Lower your learning rate to <code>0.001</code><br>
+                    • Add gradient clipping: <code>clip_grad_norm_(params, 1.0)</code><br>
+                    • Balance your dataset classes`);
+            }
+
+            input.disabled = false;
+            input.focus();
         }
     </script>
+    <style>
+        @keyframes dot {
+
+            0%,
+            60%,
+            100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+
+            30% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+    </style>
 </body>
 
 </html>
