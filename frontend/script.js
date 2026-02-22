@@ -1385,20 +1385,18 @@ async function processUserMessage(text) {
         if (reply) {
             addBotMessage(`<p>${reply.replace(/\n/g, '<br>')}</p>`);
         } else {
-            addBotMessage(`<p>I received your message but couldn't parse the response. Please check the n8n workflow configuration.</p>`);
+            // If response format is unexpected, use local fallback
+            const localReply = getPlaceholderResponse(text);
+            addBotMessage(localReply);
         }
 
     } catch (err) {
         hideTyping();
-        addBotMessage(`
-            <p>⚠️ I'm having trouble connecting right now. <em style="font-size:0.85em;opacity:0.6">(${err.message})</em></p>
-            <p>In the meantime, I can tell you:</p>
-            <ul>
-                <li>🏥 Our federated AI model processes health queries across 50+ partner hospitals</li>
-                <li>🔐 All data stays on your device — nothing is uploaded</li>
-                <li>💊 Please consult a healthcare professional for medical advice</li>
-            </ul>
-        `);
+        console.warn('Webhook failed, using demo fallback:', err);
+
+        // Use local placeholder response as fallback for demo purposes
+        const localReply = getPlaceholderResponse(text);
+        addBotMessage(localReply);
     }
 }
 
