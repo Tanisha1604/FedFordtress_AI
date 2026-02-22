@@ -13,3 +13,7 @@ data/
 
 # Mac
 .DS_Store
+
+# Results
+results/
+*.pkl
