@@ -5,6 +5,62 @@
 
 const API = 'http://localhost:5000/api';
 
+// ═══════════════════════════════════════════════════════════════
+//  ENHANCED NAVBAR — Scroll shadow · Active link · Mobile menu
+// ═══════════════════════════════════════════════════════════════
+
+// Scroll shadow
+window.addEventListener('scroll', () => {
+    document.getElementById('navbar')?.classList.toggle('scrolled', window.scrollY > 20);
+}, { passive: true });
+
+// Active nav link via IntersectionObserver
+(function initActiveNav() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.toggle(
+                        'active',
+                        link.getAttribute('href') === '#' + entry.target.id
+                    );
+                });
+            }
+        });
+    }, { rootMargin: '-50% 0px -50% 0px' });
+
+    sections.forEach(s => observer.observe(s));
+})();
+
+// Mobile hamburger
+function toggleMobileMenu() {
+    const drawer = document.getElementById('nav-mobile-drawer');
+    const hamburger = document.getElementById('nav-hamburger');
+    if (!drawer || !hamburger) return;
+    const isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', String(isOpen));
+}
+
+function closeMobileMenu() {
+    const drawer = document.getElementById('nav-mobile-drawer');
+    const hamburger = document.getElementById('nav-hamburger');
+    drawer?.classList.remove('open');
+    hamburger?.classList.remove('open');
+    hamburger?.setAttribute('aria-expanded', 'false');
+}
+
+// Close mobile menu on outside click
+document.addEventListener('click', (e) => {
+    const navbar = document.getElementById('navbar');
+    if (navbar && !navbar.contains(e.target)) closeMobileMenu();
+});
+
+
+
 // ═══ COLORS ═══
 const C = {
     bg: 0x020617,      // Slate 950
