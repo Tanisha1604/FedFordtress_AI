@@ -327,4 +327,4 @@ if __name__ == '__main__':
     print("\n🛡️  FedFortress API Server")
     print("   Frontend: http://localhost:5000")
     print("   API:      http://localhost:5000/api/status\n")
-    app.run(debug=True, port=5000, threaded=True)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True, use_reloader=False)
