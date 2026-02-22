@@ -336,30 +336,23 @@ def run_federated_training(
 
 def save_training_results(results, aggregation, num_clients, malicious_clients, 
                           rounds, quick_mode, max_samples, dp_enabled, dp_epsilon,
-                          save_dir="results"):
+                          save_dir=None):
     """
     Save training results to a pickle file.
-    
-    Args:
-        results: List of training round results
-        aggregation: Aggregation method used
-        num_clients: Number of clients
-        malicious_clients: Number of malicious clients
-        rounds: Number of training rounds
-        quick_mode: Whether quick mode was enabled
-        max_samples: Maximum samples used
-        dp_enabled: Whether DP was enabled
-        dp_epsilon: DP epsilon value
-        save_dir: Directory to save results
-    
-    Returns:
-        Path to saved file
     """
     import datetime
+    import os
     
+    # If no save_dir provided, use /tmp/results on Vercel, else ./results
+    if save_dir is None:
+        if os.environ.get('VERCEL') or os.environ.get('VERCEL_ENV'):
+            save_dir = "/tmp/results"
+        else:
+            save_dir = "results"
+            
     # Create save directory
     save_path = Path(save_dir)
-    save_path.mkdir(exist_ok=True)
+    save_path.mkdir(exist_ok=True, parents=True)
     
     # Generate filename with timestamp
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
