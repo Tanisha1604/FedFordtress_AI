@@ -1,4 +1,4 @@
-"""
+﻿"""
 Robust Aggregation Module for Federated Learning
 Implements TrimmedMean and AWTM (Adaptive Weighted Trimmed Mean).
 See aggregation_notes.txt for full math, examples, and design rationale.

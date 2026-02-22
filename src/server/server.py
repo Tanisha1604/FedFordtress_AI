@@ -1,4 +1,4 @@
-"""
+﻿"""
 Asynchronous Federated Learning Server
 Orchestrates: async buffer -> anomaly detection -> AWTM aggregation -> DP noise.
 See server_notes.txt for full documentation, DP math, and lifecycle details.

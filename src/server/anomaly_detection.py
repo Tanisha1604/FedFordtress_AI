@@ -1,4 +1,4 @@
-"""
+﻿"""
 Anomaly Detection Module for Federated Learning
 Implements GradientNormDetector + ReputationSystem.
 See anomaly_detection_notes.txt for full math, all methods, and design rationale.
@@ -73,7 +73,7 @@ class GradientNormDetector:
         norm = self.compute_gradient_norm(update)
 
         if len(reference_norms) < 3:
-            # Too few peers — use a conservative hard threshold
+            # Too few peers ΓÇö use a conservative hard threshold
             if norm > 10.0:
                 return True, 1.0, f"Norm {norm:.2f} is suspiciously large"
             return False, 0.0, ""

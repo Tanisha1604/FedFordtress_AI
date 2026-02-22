@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedFortress — Federated Learning Defense Platform</title>
+    <meta name="description"
+        content="Privacy-preserving federated learning with asynchronous updates, robust aggregation, and differential privacy. Train AI models across distributed clients without sharing raw data.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Preload Three.js for hero 3D -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script">
+</head>
+
+<body>
+
+    <!-- ════════════════════════════════════════
+     NAV
+════════════════════════════════════════ -->
+    <nav id="navbar">
+        <div class="nav-inner">
+            <div class="nav-logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <span class="logo-name">FedFortress</span>
+                    <span class="logo-tagline">FL Defense Platform</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="#how-it-works">How It Works</a>
+                <a href="#features">Features</a>
+                <a href="#demo">Demo</a>
+                <a href="#topology">Topology</a>
+                <a href="#train">Train</a>
+                <a href="#results">Results</a>
+                <a href="#" onclick="openChatbot(); return false;" class="nav-medical-btn">🏥 Medical AI</a>
+            </div>
+            <div class="nav-status">
+                <span class="status-dot"></span>
+                <span id="api-status-text">Connecting...</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ════════════════════════════════════════
+     HERO — Immersive 3D
+════════════════════════════════════════ -->
+    <!-- Full-screen 3D hero background -->
+    <div id="hero-3d-wrap">
+        <canvas id="hero-3d"></canvas>
+        <div class="hero-glow hero-glow-1"></div>
+        <div class="hero-glow hero-glow-2"></div>
+        <div class="hero-glow hero-glow-3"></div>
+    </div>
+
+    <section id="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-eyebrow" data-reveal>
+                    <span class="pill pill-blue">🔬 Research Platform</span>
+                    <span class="pill pill-green">✅ Open Source</span>
+                </div>
+                <h1 data-reveal>
+                    Privacy-Preserving<br>
+                    <span class="gradient-text">Federated Learning</span><br>
+                    at Scale
+                </h1>
+                <p class="hero-desc" data-reveal>
+                    Train machine learning models collaboratively across distributed clients
+                    without ever sharing raw data. FedFortress adds robust aggregation, anomaly
+                    detection, and differential privacy to defend against adversarial participants.
+                </p>
+                <div class="hero-cta" data-reveal>
+                    <a href="#train" class="btn btn-primary btn-glow">⚡ Launch Training</a>
+                    <a href="#how-it-works" class="btn btn-ghost">📖 Learn More</a>
+                </div>
+            </div>
+        </div>
+        <div class="hero-stats glass-panel" data-reveal>
+            <div class="stat">
+                <div class="stat-value" data-count="CIFAR-10">CIFAR-10</div>
+                <div class="stat-label">Dataset</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">AWTM</div>
+                <div class="stat-label">Aggregation</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">ε-DP</div>
+                <div class="stat-label">Privacy</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">Async</div>
+                <div class="stat-label">Updates</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Animated gradient divider -->
+    <div class="section-divider"></div>
+
+    <!-- ════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════ -->
+    <section id="how-it-works">
+        <div class="section-label" data-reveal>FEDERATED LEARNING</div>
+        <h2 class="section-title" data-reveal>How FedFortress Works</h2>
+        <p class="section-desc" data-reveal>A four-phase process that enables collaborative training while preserving
+            privacy and
+            defending against attacks</p>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-icon">🌍</div>
+                <h3>Distribute</h3>
+                <p>The global model is distributed to all participating clients. Each client holds its own private
+                    dataset — raw data never leaves the device.</p>
+                <div class="step-tag">No data sharing</div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-icon">🧠</div>
+                <h3>Train Locally</h3>
+                <p>Each client trains on its local data for several epochs. Malicious clients may attempt to corrupt the
+                    model via noise injection, label flipping, or weight scaling.</p>
+                <div class="step-tag">Local SGD</div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-icon">🔍</div>
+                <h3>Detect &amp; Filter</h3>
+                <p>The server checks gradient norms and tracks client reputation. Updates from anomalous clients are
+                    flagged and filtered before aggregation.</p>
+                <div class="step-tag">AWTM + DBSCAN</div>
+            </div>
+            <div class="step-arrow">→</div>
+            <div class="step-card">
+                <div class="step-num">04</div>
+                <div class="step-icon">🔐</div>
+                <h3>Aggregate + DP</h3>
+                <p>Valid updates are aggregated using weighted trimmed mean. Gaussian noise is added for differential
+                    privacy before updating the global model.</p>
+                <div class="step-tag">ε-Differential Privacy</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════ -->
+    <section id="features">
+        <div class="section-label" data-reveal>CAPABILITIES</div>
+        <h2 class="section-title" data-reveal>Core Features</h2>
+        <p class="section-desc" data-reveal>Six mandatory requirements — all implemented and demonstrated live</p>
+
+        <div class="features-grid" data-reveal-stagger>
+            <div class="feat-card feat-blue">
+                <div class="feat-icon">⚡</div>
+                <h3>Asynchronous Updates</h3>
+                <p>Clients submit updates independently without waiting for others. The server buffers updates and
+                    aggregates when a threshold is met — handling slow or offline clients gracefully.</p>
+                <div class="feat-tech">AsyncFLServer · Buffer threshold · Timeout handling</div>
+            </div>
+            <div class="feat-card feat-green">
+                <div class="feat-icon">🧮</div>
+                <h3>Robust Aggregation</h3>
+                <p>AWTM (Adaptive Weighted Trimmed Mean) uses DBSCAN clustering to estimate the malicious ratio, then
+                    trims outliers and weights updates by reputation and staleness.</p>
+                <div class="feat-tech">AWTM · Trimmed Mean · FedAvg · Median</div>
+            </div>
+            <div class="feat-card feat-red">
+                <div class="feat-icon">🔍</div>
+                <h3>Malicious Client Detection</h3>
+                <p>Gradient norm z-scores and IQR analysis flag suspicious updates. A reputation system tracks client
+                    behavior over rounds and penalizes persistent bad actors.</p>
+                <div class="feat-tech">Gradient norms · Reputation system · Blacklisting</div>
+            </div>
+            <div class="feat-card feat-purple">
+                <div class="feat-icon">🔐</div>
+                <h3>Differential Privacy</h3>
+                <p>Server-side Gaussian mechanism with L2 clipping ensures mathematically provable privacy guarantees. A
+                    privacy accountant tracks epsilon budget across all rounds.</p>
+                <div class="feat-tech">Gaussian noise · L2 clipping · Privacy accountant</div>
+            </div>
+            <div class="feat-card feat-gold">
+                <div class="feat-icon">📈</div>
+                <h3>Performance Evaluation</h3>
+                <p>Compare federated vs centralized baseline training. Live accuracy and loss tracking across rounds
+                    shows convergence improvement and stability under attack.</p>
+                <div class="feat-tech">CIFAR-10 · Baseline comparison · Live charts</div>
+            </div>
+            <div class="feat-card feat-cyan">
+                <div class="feat-icon">🔄</div>
+                <h3>Reproducible Results</h3>
+                <p>All training runs are saved to JSON with full configuration. Results include per-round metrics,
+                    anomaly scores, and client-level accuracy for complete reproducibility.</p>
+                <div class="feat-tech">JSON results · Config snapshots · Seeded training</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     ATTACK TYPES
+════════════════════════════════════════ -->
+    <section id="attacks">
+        <div class="section-label" data-reveal>THREAT MODELING</div>
+        <h2 class="section-title" data-reveal>Simulated Attacks</h2>
+        <p class="section-desc" data-reveal>FedFortress simulates four types of Byzantine attacks to test robustness</p>
+
+        <div class="attacks-grid" data-reveal-stagger>
+            <div class="attack-card">
+                <div class="attack-icon" style="color:#ff4757">📡</div>
+                <div class="attack-content">
+                    <h4>Noise Injection</h4>
+                    <p>Malicious clients add Gaussian noise to all model weights before sending updates, degrading
+                        global model quality.</p>
+                    <div class="attack-severity">
+                        <span>Severity</span>
+                        <div class="severity-bar">
+                            <div style="width:60%; background:#ff4757"></div>
+                        </div>
+                        <span>Medium</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attack-card">
+                <div class="attack-icon" style="color:#ff6b35">⚖️</div>
+                <div class="attack-content">
+                    <h4>Weight Scaling</h4>
+                    <p>Updates are amplified by a large factor to dominate the aggregation and steer the global model in
+                        a chosen direction.</p>
+                    <div class="attack-severity">
+                        <span>Severity</span>
+                        <div class="severity-bar">
+                            <div style="width:80%; background:#ff6b35"></div>
+                        </div>
+                        <span>High</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attack-card">
+                <div class="attack-icon" style="color:#fbbf24">🏷️</div>
+                <div class="attack-content">
+                    <h4>Label Flipping</h4>
+                    <p>Training labels are flipped (e.g. class 0 → class 1) causing the client model to learn the wrong
+                        mapping.</p>
+                    <div class="attack-severity">
+                        <span>Severity</span>
+                        <div class="severity-bar">
+                            <div style="width:70%; background:#fbbf24"></div>
+                        </div>
+                        <span>Medium-High</span>
+                    </div>
+                </div>
+            </div>
+            <div class="attack-card">
+                <div class="attack-icon" style="color:#ff4757">🎲</div>
+                <div class="attack-content">
+                    <h4>Random Weights</h4>
+                    <p>The entire model is replaced with random values before submission — the most destructive form of
+                        model poisoning.</p>
+                    <div class="attack-severity">
+                        <span>Severity</span>
+                        <div class="severity-bar">
+                            <div style="width:95%; background:#ff4757"></div>
+                        </div>
+                        <span>Critical</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     STATIC FEDERATED TRAINING DEMO
+════════════════════════════════════════ -->
+    <section id="demo">
+        <div class="section-label" data-reveal>EXAMPLE OUTPUT</div>
+        <h2 class="section-title" data-reveal>Federated Training Demo</h2>
+        <p class="section-desc" data-reveal>A pre-computed example showing how FedFortress defends against 2 malicious
+            clients over
+            5 rounds of CIFAR-10 training with ε=1.0 differential privacy.</p>
+
+        <!-- Demo Config Summary -->
+        <div class="demo-config-bar">
+            <div class="demo-chip"><span>📡</span> 5 Clients</div>
+            <div class="demo-chip demo-chip-red"><span>⚠️</span> 2 Malicious</div>
+            <div class="demo-chip"><span>🔄</span> 5 Rounds</div>
+            <div class="demo-chip"><span>🧮</span> FedAvg</div>
+            <div class="demo-chip demo-chip-purple"><span>🔐</span> ε = 1.0</div>
+            <div class="demo-chip"><span>⚔️</span> Noise Injection</div>
+        </div>
+
+        <!-- Demo Charts — 4 chart grid -->
+        <div class="demo-charts-grid" data-reveal-stagger>
+            <div class="demo-chart-card">
+                <div class="demo-chart-header">
+                    <span class="chart-dot green"></span>
+                    <h4>Model Accuracy Over Rounds</h4>
+                </div>
+                <div class="demo-chart-body-lg"><canvas id="demo-acc-chart"></canvas></div>
+                <div class="demo-chart-footer">Global accuracy improves steadily despite 2 malicious clients</div>
+            </div>
+            <div class="demo-chart-card">
+                <div class="demo-chart-header">
+                    <span class="chart-dot red"></span>
+                    <h4>Training Loss Over Rounds</h4>
+                </div>
+                <div class="demo-chart-body-lg"><canvas id="demo-loss-chart"></canvas></div>
+                <div class="demo-chart-footer">Loss decreases smoothly — AWTM filtering keeps convergence stable</div>
+            </div>
+            <div class="demo-chart-card">
+                <div class="demo-chart-header">
+                    <span class="chart-dot" style="background:var(--cyan); box-shadow:0 0 6px var(--cyan)"></span>
+                    <h4>Per-Client Accuracy (Final Round)</h4>
+                </div>
+                <div class="demo-chart-body-lg"><canvas id="demo-client-bar"></canvas></div>
+                <div class="demo-chart-footer">Malicious clients show drastically lower accuracy — clearly detectable
+                </div>
+            </div>
+            <div class="demo-chart-card">
+                <div class="demo-chart-header">
+                    <span class="chart-dot" style="background:var(--amber); box-shadow:0 0 6px var(--amber)"></span>
+                    <h4>Anomaly Score Per Client</h4>
+                </div>
+                <div class="demo-chart-body-lg"><canvas id="demo-anomaly-bar"></canvas></div>
+                <div class="demo-chart-footer">High anomaly score = flagged by AWTM → updates rejected or down-weighted
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Client Cards -->
+        <h3 class="demo-sub-heading" data-reveal>👥 Client Performance — Final Round</h3>
+        <div class="demo-clients-row" data-reveal-stagger>
+            <div class="demo-client-card honest">
+                <div class="cc-emoji">✅</div>
+                <div class="cc-name">Client 0</div>
+                <div class="cc-type">Honest</div>
+                <div class="cc-acc" style="color: var(--green)">61.2%</div>
+                <div class="cc-anom">anomaly: 0.3</div>
+            </div>
+            <div class="demo-client-card honest">
+                <div class="cc-emoji">✅</div>
+                <div class="cc-name">Client 1</div>
+                <div class="cc-type">Honest</div>
+                <div class="cc-acc" style="color: var(--green)">59.8%</div>
+                <div class="cc-anom">anomaly: 0.2</div>
+            </div>
+            <div class="demo-client-card honest">
+                <div class="cc-emoji">✅</div>
+                <div class="cc-name">Client 2</div>
+                <div class="cc-type">Honest</div>
+                <div class="cc-acc" style="color: var(--green)">60.5%</div>
+                <div class="cc-anom">anomaly: 0.4</div>
+            </div>
+            <div class="demo-client-card malicious">
+                <div class="cc-emoji">⚠️</div>
+                <div class="cc-name">Client 3</div>
+                <div class="cc-type">Malicious</div>
+                <div class="cc-acc" style="color: var(--red)">18.7%</div>
+                <div class="cc-anom">anomaly: 8.4</div>
+            </div>
+            <div class="demo-client-card malicious">
+                <div class="cc-emoji">⚠️</div>
+                <div class="cc-name">Client 4</div>
+                <div class="cc-type">Malicious</div>
+                <div class="cc-acc" style="color: var(--red)">15.3%</div>
+                <div class="cc-anom">anomaly: 9.1</div>
+            </div>
+        </div>
+
+        <!-- Demo Results Summary -->
+        <div class="demo-results-row">
+            <div class="demo-metric">
+                <div class="mt-icon">🏁</div>
+                <div class="mt-val">32.4%</div>
+                <div class="mt-lbl">Initial Accuracy</div>
+            </div>
+            <div class="demo-metric">
+                <div class="mt-icon">🏆</div>
+                <div class="mt-val" style="color: var(--green)">58.9%</div>
+                <div class="mt-lbl">Final Accuracy</div>
+            </div>
+            <div class="demo-metric">
+                <div class="mt-icon">📈</div>
+                <div class="mt-val" style="color: var(--green)">+26.5%</div>
+                <div class="mt-lbl">Improvement</div>
+            </div>
+            <div class="demo-metric">
+                <div class="mt-icon">🔐</div>
+                <div class="mt-val" style="color: var(--purple)">0.0500</div>
+                <div class="mt-lbl">DP Noise Scale</div>
+            </div>
+            <div class="demo-metric">
+                <div class="mt-icon">🛡️</div>
+                <div class="mt-val" style="color: var(--amber)">42</div>
+                <div class="mt-lbl">Threat Score</div>
+            </div>
+        </div>
+
+        <div class="demo-callout">
+            <span>💡</span>
+            <p>This is a static example. <a href="#train" style="color: var(--cyan); text-decoration: underline;">Scroll
+                    down to Configure &amp; Train</a> to run your own live experiment with custom parameters!</p>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     3D TOPOLOGY
+════════════════════════════════════════ -->
+    <section id="topology">
+        <div class="section-label" data-reveal>NETWORK VISUALIZATION</div>
+        <h2 class="section-title" data-reveal>Live Network Topology</h2>
+        <p class="section-desc" data-reveal>Interactive 3D view of the federated network — drag to rotate, scroll to
+            zoom</p>
+
+        <div class="topo-layout">
+            <div class="topo-canvas-wrap">
+                <canvas id="network3d"></canvas>
+                <div class="topo-hint">↻ Drag · 🔍 Scroll</div>
+            </div>
+            <div class="topo-sidebar">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span class="info-card-icon">📊</span>
+                        <h4>Network Status</h4>
+                    </div>
+                    <div class="kv-table">
+                        <div class="kv-row"><span>Total Clients</span><strong id="inf-total" class="val-blue">5</strong>
+                        </div>
+                        <div class="kv-row"><span>Honest</span><strong id="inf-honest" class="val-green">4</strong>
+                        </div>
+                        <div class="kv-row"><span>Malicious</span><strong id="inf-mal" class="val-red">1</strong></div>
+                        <div class="kv-row"><span>Aggregation</span><strong id="inf-agg"
+                                class="val-blue">FedAvg</strong></div>
+                        <div class="kv-row"><span>Privacy</span><strong id="inf-dp" class="val-purple">ε = 1.0</strong>
+                        </div>
+                        <div class="kv-row"><span>Rounds</span><strong id="inf-rounds" class="val-blue">5</strong></div>
+                        <div class="kv-row"><span>Samples</span><strong id="inf-samples" class="val-blue">5,000</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="legend-card">
+                    <h4>Legend</h4>
+                    <div class="legend-row"><span class="ldot green"></span>Honest Client</div>
+                    <div class="legend-row"><span class="ldot red"></span>Malicious Client</div>
+                    <div class="legend-row"><span class="ldot cyan diamond"></span>Central Server</div>
+                    <div class="legend-row"><span class="ldot gray line"></span>Update Channel</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     CONFIGURATION + TRAINING
+════════════════════════════════════════ -->
+    <section id="train">
+        <div class="section-label" data-reveal>LIVE EXPERIMENT</div>
+        <h2 class="section-title" data-reveal>Configure &amp; Train</h2>
+        <p class="section-desc" data-reveal>Adjust parameters and run federated or centralized training — results update
+            in real
+            time</p>
+
+        <!-- Config Grid -->
+        <div class="config-layout">
+            <div class="config-group">
+                <div class="config-header"><span>🎯</span> Training Setup</div>
+                <div class="form-row">
+                    <label>Clients <span id="v-clients" class="vval">3</span></label>
+                    <input type="range" id="num_clients" min="2" max="10" value="3">
+                </div>
+                <div class="form-row">
+                    <label>Rounds <span id="v-rounds" class="vval">3</span></label>
+                    <input type="range" id="rounds" min="1" max="10" value="3">
+                </div>
+                <div class="form-row">
+                    <label>Local Epochs <span id="v-epochs" class="vval">1</span></label>
+                    <input type="range" id="local_epochs" min="1" max="5" value="1">
+                </div>
+                <div class="form-row">
+                    <label>Samples <span id="v-samples" class="vval">1,000</span></label>
+                    <input type="range" id="max_samples" min="1000" max="50000" step="1000" value="1000">
+                </div>
+            </div>
+
+            <div class="config-group">
+                <div class="config-header"><span>⚔️</span> Attack Simulation</div>
+                <div class="form-row">
+                    <label>Malicious Clients <span id="v-mal" class="vval">1</span></label>
+                    <input type="range" id="malicious_clients" min="0" max="4" value="1">
+                </div>
+                <div class="form-row">
+                    <label>Attack Type</label>
+                    <select id="attack_type">
+                        <option value="noise_injection">Noise Injection</option>
+                        <option value="label_flipping">Label Flipping</option>
+                        <option value="weight_scaling">Weight Scaling</option>
+                        <option value="random_weights">Random Weights</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="config-group">
+                <div class="config-header"><span>🔐</span> Differential Privacy</div>
+                <div class="form-row">
+                    <label>Enable DP</label>
+                    <label class="toggle">
+                        <input type="checkbox" id="dp_enabled" checked>
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label>Epsilon (ε) <span id="v-epsilon" class="vval">1.0</span></label>
+                    <input type="range" id="dp_epsilon" min="0.1" max="10" step="0.1" value="1.0">
+                </div>
+                <div class="dp-explainer">
+                    <span>Lower ε = stronger privacy, more noise</span>
+                </div>
+            </div>
+
+            <div class="config-group">
+                <div class="config-header"><span>🧮</span> Aggregation</div>
+                <div class="agg-buttons">
+                    <button class="agg-btn active" data-val="FedAvg" onclick="setAgg(this)">FedAvg</button>
+                    <button class="agg-btn" data-val="Trimmed Mean" onclick="setAgg(this)">Trimmed Mean</button>
+                    <button class="agg-btn" data-val="Median" onclick="setAgg(this)">Median</button>
+                </div>
+                <input type="hidden" id="aggregation" value="FedAvg">
+                <div class="agg-desc" id="agg-desc">Basic weighted averaging — fast but vulnerable to poisoning attacks.
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="train-actions">
+            <button id="btn-baseline" class="btn btn-secondary" onclick="runBaseline()">📈 Run Baseline</button>
+            <button id="btn-federated" class="btn btn-primary-large" onclick="runFederated()">⚡ Start Federated
+                Training</button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progress-wrap" class="hidden">
+            <div class="prog-bar-outer">
+                <div class="prog-bar-inner" id="prog-fill"></div>
+            </div>
+            <div class="prog-label" id="prog-label">Initializing...</div>
+        </div>
+
+        <!-- Charts -->
+        <div id="charts-wrap" class="hidden">
+            <div class="charts-row">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="chart-dot green"></span>
+                        <h4>Model Accuracy</h4>
+                    </div>
+                    <div class="chart-body"><canvas id="acc-chart"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <span class="chart-dot red"></span>
+                        <h4>Training Loss</h4>
+                    </div>
+                    <div class="chart-body"><canvas id="loss-chart"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Cards -->
+        <div id="clients-wrap" class="hidden">
+            <h3 class="sub-heading">👥 Client Performance — Final Round</h3>
+            <div class="clients-row" id="clients-row"></div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     SECURITY PANEL (shown after training)
+════════════════════════════════════════ -->
+    <section id="security-section" class="hidden">
+        <div class="section-label">SECURITY ANALYSIS</div>
+        <h2 class="section-title">Defense Report</h2>
+
+        <div class="security-layout">
+            <!-- Gauge -->
+            <div class="gauge-card">
+                <h4>Threat Level</h4>
+                <svg id="gauge-svg" viewBox="0 0 220 140">
+                    <defs>
+                        <linearGradient id="grd" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#00ff88" />
+                            <stop offset="45%" stop-color="#fbbf24" />
+                            <stop offset="100%" stop-color="#ff4757" />
+                        </linearGradient>
+                    </defs>
+                    <path d="M 25 115 A 85 85 0 0 1 195 115" fill="none" stroke="rgba(255,255,255,0.06)"
+                        stroke-width="18" stroke-linecap="round" />
+                    <path id="gauge-path" d="M 25 115 A 85 85 0 0 1 195 115" fill="none" stroke="url(#grd)"
+                        stroke-width="18" stroke-linecap="round" stroke-dasharray="0 267" />
+                    <text id="gauge-num" x="110" y="98" text-anchor="middle" fill="#f1f5f9" font-size="32"
+                        font-weight="800" font-family="Inter">0</text>
+                    <text id="gauge-lbl" x="110" y="120" text-anchor="middle" fill="#94a3b8" font-size="13"
+                        font-family="Inter">LOW</text>
+                </svg>
+            </div>
+
+            <!-- Defenses Active -->
+            <div class="defenses-card">
+                <h4>🔒 Active Defenses</h4>
+                <div class="defenses-list">
+                    <div class="defense-row">
+                        <span class="def-badge green">✓ ACTIVE</span>
+                        <div>
+                            <strong>AWTM Aggregation</strong>
+                            <p>DBSCAN clustering estimates malicious ratio, adaptive trimming filters outliers,
+                                reputation weights remaining updates</p>
+                        </div>
+                    </div>
+                    <div class="defense-row">
+                        <span class="def-badge green">✓ ACTIVE</span>
+                        <div>
+                            <strong>Anomaly Detection</strong>
+                            <p>Gradient norm z-score and IQR analysis per round, persistent offenders blacklisted via
+                                reputation system</p>
+                        </div>
+                    </div>
+                    <div class="defense-row">
+                        <span class="def-badge" id="dp-badge">✓ ACTIVE</span>
+                        <div>
+                            <strong>Differential Privacy</strong>
+                            <p id="dp-detail">Gaussian mechanism with L2 clipping, privacy accountant tracks cumulative
+                                ε-budget</p>
+                        </div>
+                    </div>
+                    <div class="defense-row">
+                        <span class="def-badge green">✓ ACTIVE</span>
+                        <div>
+                            <strong>Async Buffering</strong>
+                            <p>Updates buffered server-side — no synchronization barrier, handles stragglers and
+                                dropouts</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     RESULTS
+════════════════════════════════════════ -->
+    <section id="results" class="hidden">
+        <div class="section-label">EVALUATION</div>
+        <h2 class="section-title">Training Results</h2>
+
+        <div class="metrics-row">
+            <div class="metric-tile">
+                <div class="mt-icon">🏁</div>
+                <div class="mt-val" id="m-init">—</div>
+                <div class="mt-lbl">Initial Accuracy</div>
+            </div>
+            <div class="metric-tile">
+                <div class="mt-icon">🏆</div>
+                <div class="mt-val" id="m-final">—</div>
+                <div class="mt-lbl">Final Accuracy</div>
+            </div>
+            <div class="metric-tile">
+                <div class="mt-icon">📈</div>
+                <div class="mt-val" id="m-delta">—</div>
+                <div class="mt-lbl">Improvement</div>
+            </div>
+            <div class="metric-tile">
+                <div class="mt-icon">🔐</div>
+                <div class="mt-val" id="m-noise">—</div>
+                <div class="mt-lbl">DP Noise Scale</div>
+            </div>
+            <div class="metric-tile">
+                <div class="mt-icon">⚔️</div>
+                <div class="mt-val" id="m-mal">—</div>
+                <div class="mt-lbl">Malicious Ratio</div>
+            </div>
+            <div class="metric-tile">
+                <div class="mt-icon">⏱️</div>
+                <div class="mt-val" id="m-rounds">—</div>
+                <div class="mt-lbl">Rounds Completed</div>
+            </div>
+        </div>
+
+        <div class="recap-card">
+            <div class="recap-header">📝 Run Configuration</div>
+            <div class="kv-table" id="recap-kv"></div>
+        </div>
+
+        <div class="success-box" id="success-box">
+            ✅ Training complete — all results saved to <code id="saved-path">results/</code>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="logo-icon">🛡️</span>
+                <div>
+                    <div class="footer-name">FedFortress</div>
+                    <div class="footer-sub">Federated Learning Defense Platform</div>
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="#how-it-works">How It Works</a>
+                <a href="#features">Features</a>
+                <a href="#attacks">Attacks</a>
+                <a href="#train">Train</a>
+            </div>
+            <div class="footer-copy">Built with PyTorch · Flask · Three.js · Chart.js</div>
+        </div>
+    </footer>
+
+    <!-- ════════════════════════════════════════
+     MEDICAL AI CHATBOT MODAL
+════════════════════════════════════════ -->
+    <div id="chatbot-overlay" class="chatbot-overlay">
+        <div class="chatbot-modal">
+            <!-- Header -->
+            <div class="chatbot-header">
+                <div class="chatbot-header-left">
+                    <div class="chatbot-avatar">
+                        <span class="chatbot-avatar-icon">🧬</span>
+                        <span class="chatbot-avatar-pulse"></span>
+                    </div>
+                    <div>
+                        <div class="chatbot-title">FedFortress Medical AI</div>
+                        <div class="chatbot-subtitle">
+                            <span class="chatbot-status-dot"></span>
+                            Privacy-Preserving Health Assistant
+                        </div>
+                    </div>
+                </div>
+                <div class="chatbot-header-right">
+                    <div class="chatbot-badge">🔒 HIPAA Compliant</div>
+                    <button class="chatbot-close" onclick="closeChatbot()" aria-label="Close chatbot">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chatbot-messages" id="chatbot-messages">
+                <!-- System welcome -->
+                <div class="chat-system-msg">
+                    <span>🛡️</span>
+                    <p>This conversation is protected by federated learning. Your data never leaves your device.</p>
+                </div>
+
+                <!-- Bot welcome message -->
+                <div class="chat-msg chat-bot" style="animation-delay: 0.3s">
+                    <div class="chat-msg-avatar">🧬</div>
+                    <div class="chat-msg-content">
+                        <div class="chat-msg-bubble">
+                            <p>Hello! I'm the <strong>FedFortress Medical AI</strong> assistant, powered by
+                                privacy-preserving federated learning.</p>
+                            <p>I can help you with:</p>
+                            <ul>
+                                <li>🩺 Symptom analysis & preliminary assessment</li>
+                                <li>💊 Medication information & interactions</li>
+                                <li>📋 Health record insights</li>
+                                <li>🧪 Lab result interpretation</li>
+                            </ul>
+                            <p class="chat-disclaimer">⚠️ This is an AI assistant — always consult a healthcare
+                                professional for medical decisions.</p>
+                        </div>
+                        <div class="chat-msg-time">Just now</div>
+                    </div>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="chat-quick-actions">
+                    <button class="chat-quick-btn" onclick="sendQuickMsg('I have a headache and slight fever')">
+                        🤒 Symptom Check
+                    </button>
+                    <button class="chat-quick-btn" onclick="sendQuickMsg('What are the side effects of Ibuprofen?')">
+                        💊 Drug Info
+                    </button>
+                    <button class="chat-quick-btn" onclick="sendQuickMsg('Explain my blood test results')">
+                        🧪 Lab Results
+                    </button>
+                    <button class="chat-quick-btn" onclick="sendQuickMsg('Show me preventive health tips')">
+                        🏃 Health Tips
+                    </button>
+                </div>
+            </div>
+
+            <!-- Typing indicator (hidden by default) -->
+            <div class="chat-typing" id="chat-typing">
+                <div class="chat-msg-avatar">🧬</div>
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="chatbot-input-area">
+                <div class="chatbot-input-wrap">
+                    <input type="text" id="chatbot-input"
+                        placeholder="Describe your symptoms or ask a health question..." autocomplete="off" />
+                    <button class="chatbot-send" id="chatbot-send" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="chatbot-input-footer">
+                    <span>🔐 End-to-end encrypted</span>
+                    <span>Powered by Federated Learning</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="chatbot-fab" id="chatbot-fab" onclick="openChatbot()" aria-label="Open Medical AI Chatbot">
+        <span class="fab-icon">🏥</span>
+        <span class="fab-label">Medical AI</span>
+        <span class="fab-pulse"></span>
+    </button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
